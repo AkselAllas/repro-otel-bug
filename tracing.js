@@ -18,9 +18,17 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
 
 const traceExporter = new OTLPTraceExporter()
 
+const provider = new BasicTracerProvider({
+  resource: new Resource({
+    [SemanticResourceAttributes.SERVICE_NAME]:
+      process.env.DD_SERVICE || 'default-node-service-name',
+  }),
+});
+
+provider.addSpanProcessor(new SimpleSpanProcessor(traceExporter));
+
 const sdk = new NodeSDK({
   traceExporter,
-  spanProcessor: new SimpleSpanProcessor(traceExporter),
 });
 
 sdk
@@ -28,6 +36,8 @@ sdk
   .then(() => console.log('OTEL Starting...'))
   .catch((error) => console.error(error))
   .finally(() => console.info('OTEL start completed'))
+
+provider.register();
 
 const tracer = trace.getTracer('example-otlp-exporter-node');
 
